@@ -8,7 +8,8 @@ namespace ConcumaCompilerFramework.Lexing
         {
             { "true", TokenType.True },
             { "false", TokenType.False },
-            { "null", TokenType.Null }
+            { "null", TokenType.Null },
+            { "print", TokenType.Print }
         };
 
         private readonly string _text;
@@ -120,6 +121,11 @@ namespace ConcumaCompilerFramework.Lexing
                             }
 
                             tokens.Add(Token(TokenType.Greater, ">"));
+                            break;
+                        }
+                    case ';':
+                        {
+                            tokens.Add(Token(TokenType.Semicolon, ";"));
                             break;
                         }
                     default:

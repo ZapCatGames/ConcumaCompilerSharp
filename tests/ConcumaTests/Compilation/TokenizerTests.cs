@@ -1,6 +1,6 @@
 ﻿using ConcumaCompilerFramework.Lexing;
 
-namespace ConcumaTests
+namespace ConcumaTests.Compilation
 {
     public class TokenizerTests
     {
