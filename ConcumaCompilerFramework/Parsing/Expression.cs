@@ -8,7 +8,7 @@ namespace ConcumaCompilerFramework.Parsing
         {
             public Literal(object? value)
             {
-                this.Value = value;
+                Value = value;
             }
 
             public object? Value { get; }

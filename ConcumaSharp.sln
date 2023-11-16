@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33403.182
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcumaCompilerFramework", "ConcumaCompilerFramework\ConcumaCompilerFramework.csproj", "{CBBAF676-5ADC-4925-9781-BEE0A843EA69}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConcumaCompilerFramework", "ConcumaCompilerFramework\ConcumaCompilerFramework.csproj", "{CBBAF676-5ADC-4925-9781-BEE0A843EA69}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DDC73CF4-269A-47DF-9C6B-288538DA1017}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcumaTests", "tests\ConcumaTests\ConcumaTests.csproj", "{E97DE8E7-80AC-4B10-8F13-5F74A215BDD8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConcumaTests", "tests\ConcumaTests\ConcumaTests.csproj", "{E97DE8E7-80AC-4B10-8F13-5F74A215BDD8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcumaRuntimeFramework", "ConcumaRuntimeFramework\ConcumaRuntimeFramework.csproj", "{6907B182-AB45-4575-ABCE-9E1422AE17EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConcumaRuntimeFramework", "ConcumaRuntimeFramework\ConcumaRuntimeFramework.csproj", "{6907B182-AB45-4575-ABCE-9E1422AE17EB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcumaConsoleCompiler", "ConcumaConsoleCompiler\ConcumaConsoleCompiler.csproj", "{6886820A-D320-4562-AFF0-BDA8D07A6589}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,6 +31,10 @@ Global
 		{6907B182-AB45-4575-ABCE-9E1422AE17EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6907B182-AB45-4575-ABCE-9E1422AE17EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6907B182-AB45-4575-ABCE-9E1422AE17EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6886820A-D320-4562-AFF0-BDA8D07A6589}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6886820A-D320-4562-AFF0-BDA8D07A6589}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6886820A-D320-4562-AFF0-BDA8D07A6589}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6886820A-D320-4562-AFF0-BDA8D07A6589}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
