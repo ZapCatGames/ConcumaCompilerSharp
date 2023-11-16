@@ -59,5 +59,17 @@ namespace ConcumaCompiler.Parsing
 
             public Token Name { get; }
         }
+
+        public sealed class Call : Expression
+        {
+            public Call(Token name, List<Expression> parameters)
+            {
+                Name = name;
+                Parameters = parameters;
+            }
+
+            public Token Name { get; }
+            public List<Expression> Parameters { get; }
+        }
     }
 }

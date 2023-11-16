@@ -3,7 +3,7 @@
     public enum TokenType
     {
         // Control Flow
-        EoF, LeftParen, RightParen, LeftBrace, RightBrace, Identifier, Semicolon,
+        EoF, LeftParen, RightParen, LeftBrace, RightBrace, Identifier, Semicolon, Return, Break, Comma,
 
         // Types - Literals
         Integer, Double, String, True, False, Null,
@@ -15,7 +15,7 @@
         EqualEqual, BangEqual, GreaterEqual, Greater, LessEqual, Less,
 
         // Statements
-        Print, If, Else, Const, Var, For
+        Print, If, Else, Const, Var, For, Function,
     }
 
     public readonly record struct Token(TokenType Type, object? Value, string Lexeme, int Line);

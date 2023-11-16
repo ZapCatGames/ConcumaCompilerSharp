@@ -86,5 +86,46 @@ namespace ConcumaCompiler.Parsing
             public Statement? Accumulator { get; }
             public Statement Action { get; }
         }
+
+        public sealed class Break : Statement
+        {
+
+        }
+
+        public sealed class Function : Statement
+        {
+            public Function(Token name, List<Token> parameters, Statement action)
+            {
+                Name = name;
+                Parameters = parameters;
+                Action = action;
+            }
+
+            public Token Name { get; }
+            public List<Token> Parameters { get; }
+            public Statement Action { get; }
+        }
+
+        public sealed class ReturnStmt : Statement
+        {
+            public ReturnStmt(Expression? value)
+            {
+                Value = value;
+            }
+
+            public Expression? Value { get; }
+        }
+
+        public sealed class CallStmt : Statement
+        {
+            public CallStmt(Token name, List<Expression> parameters)
+            {
+                Name = name;
+                Parameters = parameters;
+            }
+
+            public Token Name { get; }
+            public List<Expression> Parameters { get; }
+        }
     }
 }

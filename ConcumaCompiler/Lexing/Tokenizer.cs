@@ -14,7 +14,10 @@ namespace ConcumaCompiler.Lexing
             { "else", TokenType.Else },
             { "const", TokenType.Const },
             { "var", TokenType.Var },
-            { "for", TokenType.For }
+            { "for", TokenType.For },
+            { "fn", TokenType.Function },
+            { "return", TokenType.Return },
+            { "break", TokenType.Break },
         };
 
         private readonly string _text;
@@ -137,6 +140,11 @@ namespace ConcumaCompiler.Lexing
                             }
 
                             tokens.Add(Token(TokenType.Greater, ">"));
+                            break;
+                        }
+                    case ',':
+                        {
+                            tokens.Add(Token(TokenType.Comma, ","));
                             break;
                         }
                     case ';':

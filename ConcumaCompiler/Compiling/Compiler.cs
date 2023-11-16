@@ -1,5 +1,6 @@
 ﻿using ConcumaCompiler.Lexing;
 using ConcumaCompiler.Parsing;
+using static ConcumaCompiler.Parsing.Expression;
 
 namespace ConcumaCompiler.Compiling
 {
@@ -8,8 +9,8 @@ namespace ConcumaCompiler.Compiling
         private readonly List<Statement> _statements = new();
         private readonly List<byte> _bytecode = new();
 
-        private readonly Dictionary<string, int> _definedSymbols = new();
-        private int _symbolIndex = 0;
+        private ConcumaEnvironment _currentEnv = new(null);
+        private int _symbolIndex = 1;
 
         public Compiler(List<Statement> statements)
         {
@@ -74,13 +75,13 @@ namespace ConcumaCompiler.Compiling
                         {
                             EvaluateExpression(decl.Initializer);
                         }
-                        _definedSymbols.Add(decl.Name.Lexeme, _symbolIndex++);
+                        _currentEnv.Add(decl.Name.Lexeme, _symbolIndex++);
                         break;
                     }
                 case Statement.DefinitionStmt def:
                     {
                         _bytecode.Add(0x05);
-                        _bytecode.AddRange(BitConverter.GetBytes(_definedSymbols[def.Name.Lexeme]));
+                        _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(def.Name.Lexeme)));
                         EvaluateExpression(def.Value);
                         break;
                     }
@@ -103,6 +104,51 @@ namespace ConcumaCompiler.Compiling
                         if (f.Accumulator != null)
                         {
                             EvaluateStatement(f.Accumulator);
+                        }
+                        else
+                        {
+                            _bytecode.Add(0x00);
+                        }
+                        break;
+                    }
+                case Statement.Break:
+                    {
+                        _bytecode.Add(0x07);
+                        break;
+                    }
+                case Statement.Function fn:
+                    {
+                        _bytecode.Add(0x08);
+                        _bytecode.AddRange(BitConverter.GetBytes(_symbolIndex));
+                        _currentEnv.Add(fn.Name.Lexeme, _symbolIndex++);
+                        _currentEnv = new ConcumaEnvironment(_currentEnv);
+                        _bytecode.AddRange(BitConverter.GetBytes(fn.Parameters.Count));
+                        for (int i = 0; i < fn.Parameters.Count; i++)
+                        {
+                            _bytecode.AddRange(BitConverter.GetBytes(_symbolIndex));
+                            _currentEnv.Add(fn.Parameters[i].Lexeme, _symbolIndex++);
+                        }
+                        EvaluateStatement(fn.Action);
+                        _currentEnv = _currentEnv.Exit()!;
+                        break;
+                    }
+                case Statement.CallStmt call:
+                    {
+                        _bytecode.Add(0x09);
+                        _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(call.Name.Lexeme)));
+                        _bytecode.AddRange(BitConverter.GetBytes(call.Parameters.Count));
+                        for (int i = 0; i < call.Parameters.Count; i++)
+                        {
+                            EvaluateExpression(call.Parameters[i]);
+                        }
+                        break;
+                    }
+                case Statement.ReturnStmt ret:
+                    {
+                        _bytecode.Add(0x0A);
+                        if (ret.Value is not null)
+                        {
+                            EvaluateExpression(ret.Value);
                         }
                         else
                         {
@@ -137,12 +183,27 @@ namespace ConcumaCompiler.Compiling
                     _bytecode.Add(0x05);
                     Var(v);
                     break;
+                case Expression.Call c:
+                    _bytecode.Add(0x06);
+                    Call(c);
+                    break;
+
+            }
+        }
+
+        private void Call(Expression.Call c)
+        {
+            _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(c.Name.Lexeme)));
+            _bytecode.AddRange(BitConverter.GetBytes(c.Parameters.Count));
+            for (int i = 0; i < c.Parameters.Count; i++)
+            {
+                EvaluateExpression(c.Parameters[i]);
             }
         }
 
         private void Var(Expression.Var v)
         {
-            _bytecode.AddRange(BitConverter.GetBytes(_definedSymbols[v.Name.Lexeme]));
+            _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(v.Name.Lexeme)));
         }
 
         private void Unary(Expression.Unary u)

@@ -1,4 +1,5 @@
 ﻿using ConcumaCompiler.Lexing;
+using System.Xml.Linq;
 
 namespace ConcumaCompiler.Parsing
 {
@@ -42,12 +43,48 @@ namespace ConcumaCompiler.Parsing
                     return DeclarationStatement(false);
                 case TokenType.For:
                     return ForStatement();
+                case TokenType.Function:
+                    return Function();
+                case TokenType.Break:
+                    Consume(TokenType.Semicolon, "Expected ';' after 'break'.");
+                    return new Statement.Break();
+                case TokenType.Return:
+                    Expression? e = null;
+                    if (!Match(TokenType.Semicolon))
+                    {
+                        e = ParseExpression();
+                    }
+                    Consume(TokenType.Semicolon, "Expected ';' after 'return'.");
+                    return new Statement.ReturnStmt(e);
                 case TokenType.Identifier:
                     return Identifier();
             }
 
             Synchronize();
             return ParseStatement();
+        }
+
+        private Statement Function()
+        {
+            Token name = Advance();
+            Consume(TokenType.LeftParen, "Expected '(' after method name.");
+
+            List<Token> parameters = new();
+
+            while (true)
+            {
+                parameters.Add(Advance());
+                if (!Match(TokenType.Comma))
+                {
+                    break;
+                }
+            }
+
+            Consume(TokenType.RightParen, "Expected ')' after function parameters.");
+
+            Statement action = ParseStatement();
+
+            return new Statement.Function(name, parameters, action);
         }
 
         private Statement ForStatement()
@@ -86,6 +123,23 @@ namespace ConcumaCompiler.Parsing
                 Expression initializer = ParseExpression();
                 if (requireSemicolon) Consume(TokenType.Semicolon, "Expected ';' after redefinition.");
                 return new Statement.DefinitionStmt(name, initializer);
+            }
+            else if (Match(TokenType.LeftParen))
+            {
+                List<Expression> parameters = new();
+
+                while (true)
+                {
+                    parameters.Add(ParseExpression());
+                    if (!Match(TokenType.Comma))
+                    {
+                        break;
+                    }
+                }
+
+                Consume(TokenType.RightParen, "Expected ')' after function parameters.");
+                Consume(TokenType.Semicolon, "Expected ';' after function call.");
+                return new Statement.CallStmt(name, parameters);
             }
 
             ErrorHandling.Parsing(name, "Floating identifier.");
@@ -210,6 +264,32 @@ namespace ConcumaCompiler.Parsing
             return Literal();
         }
 
+        private Expression IdentifierExpr()
+        {
+            Token name = Previous();
+
+            if (Match(TokenType.LeftParen))
+            {
+                List<Expression> parameters = new();
+
+                while (true)
+                {
+                    parameters.Add(ParseExpression());
+                    if (!Match(TokenType.Comma))
+                    {
+                        break;
+                    }
+                }
+
+                Consume(TokenType.RightParen, "Expected ')' after function parameters.");
+                return new Expression.Call(name, parameters);
+            }
+            else
+            {
+                return new Expression.Var(name);
+            }
+        }
+
         private Expression Literal()
         {
             if (Match(TokenType.False)) return new Expression.Literal(false);
@@ -220,7 +300,7 @@ namespace ConcumaCompiler.Parsing
                 return new Expression.Literal(Previous().Value);
 
             if (Match(TokenType.Identifier))
-                return new Expression.Var(Previous());
+                return IdentifierExpr();
 
             if (Match(TokenType.LeftParen))
             {
