@@ -56,7 +56,6 @@ namespace ConcumaCompiler.Parsing
             Statement? initializer = null;
             if (Peek().Type != TokenType.Semicolon)
             {
-                Advance();
                 initializer = DeclarationStatement(false);
             }
             Expression? condition = new Expression.Literal(true);
