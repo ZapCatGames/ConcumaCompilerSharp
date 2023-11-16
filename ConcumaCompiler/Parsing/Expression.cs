@@ -49,5 +49,15 @@ namespace ConcumaCompiler.Parsing
 
             public Expression Expression { get; }
         }
+
+        public sealed class Var : Expression
+        {
+            public Var(Token name)
+            {
+                Name = name;
+            }
+
+            public Token Name { get; }
+        }
     }
 }

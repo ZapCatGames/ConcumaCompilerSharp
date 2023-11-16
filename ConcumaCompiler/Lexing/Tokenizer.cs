@@ -9,7 +9,12 @@ namespace ConcumaCompiler.Lexing
             { "true", TokenType.True },
             { "false", TokenType.False },
             { "null", TokenType.Null },
-            { "print", TokenType.Print }
+            { "print", TokenType.Print },
+            { "if", TokenType.If },
+            { "else", TokenType.Else },
+            { "const", TokenType.Const },
+            { "var", TokenType.Var },
+            { "for", TokenType.For }
         };
 
         private readonly string _text;
@@ -76,6 +81,16 @@ namespace ConcumaCompiler.Lexing
                             tokens.Add(Token(TokenType.RightParen, ")"));
                             break;
                         }
+                    case '{':
+                        {
+                            tokens.Add(Token(TokenType.LeftBrace, "{"));
+                            break;
+                        }
+                    case '}':
+                        {
+                            tokens.Add(Token(TokenType.RightBrace, "}"));
+                            break;
+                        }
                     case '=':
                         {
                             if (Peek() == '=')
@@ -85,6 +100,7 @@ namespace ConcumaCompiler.Lexing
                                 break;
                             }
 
+                            tokens.Add(Token(TokenType.Equal, "="));
                             break;
                         }
                     case '!':

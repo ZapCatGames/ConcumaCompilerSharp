@@ -32,10 +32,110 @@ namespace ConcumaCompiler.Parsing
                     Statement s = new Statement.PrintStmt(ParseExpression());
                     Consume(TokenType.Semicolon, "Expected semicolon after expression.");
                     return s;
+                case TokenType.If:
+                    return IfStatement();
+                case TokenType.LeftBrace:
+                    return BlockStatement();
+                case TokenType.Const:
+                    return DeclarationStatement(true);
+                case TokenType.Var:
+                    return DeclarationStatement(false);
+                case TokenType.For:
+                    return ForStatement();
+                case TokenType.Identifier:
+                    return Identifier();
             }
 
             Synchronize();
             return ParseStatement();
+        }
+
+        private Statement ForStatement()
+        {
+            Consume(TokenType.LeftParen, "Expected '(' after 'for'.");
+            Statement? initializer = null;
+            if (Peek().Type != TokenType.Semicolon)
+            {
+                Advance();
+                initializer = DeclarationStatement(false);
+            }
+            Expression? condition = new Expression.Literal(true);
+            if (Peek().Type != TokenType.Semicolon)
+            {
+                condition = ParseExpression();
+                Consume(TokenType.Semicolon, "Expected semicolon after for condition.");
+            }
+            Statement? accumulator = null;
+            if (Peek().Type != TokenType.RightParen)
+            {
+                Advance();
+                accumulator = Identifier(false);
+            }
+            Consume(TokenType.RightParen, "Expected ')' after for arguments.");
+
+            Statement action = ParseStatement();
+
+            return new Statement.ForStmt(initializer, condition, accumulator, action);
+        }
+
+        private Statement Identifier(bool requireSemicolon = true)
+        {
+            Token name = Previous();
+
+            if (Match(TokenType.Equal))
+            {
+                Expression initializer = ParseExpression();
+                if (requireSemicolon) Consume(TokenType.Semicolon, "Expected ';' after redefinition.");
+                return new Statement.DefinitionStmt(name, initializer);
+            }
+
+            ErrorHandling.Parsing(name, "Floating identifier.");
+            throw new Exception();
+        }
+
+        private Statement DeclarationStatement(bool isConst)
+        {
+            Token name = Advance();
+            Expression? initializer = null;
+            if (Match(TokenType.Equal))
+            {
+                initializer = ParseExpression();
+            }
+
+            Consume(TokenType.Semicolon, "Expected ';' after declaration.");
+
+            return new Statement.DeclarationStmt(name, initializer, isConst);
+        }
+
+        private Statement IfStatement()
+        {
+            Consume(TokenType.LeftParen, "Expected '(' after 'if'.");
+
+            Expression condition = ParseExpression();
+
+            Consume(TokenType.RightParen, "Expected ')' after if condition.");
+
+            Statement ifBranch = ParseStatement();
+            Statement? elseBranch = null;
+
+            if (Match(TokenType.Else))
+            {
+                elseBranch = ParseStatement();
+            }
+
+            return new Statement.IfStmt(condition, ifBranch, elseBranch);
+        }
+
+        private Statement BlockStatement()
+        {
+            List<Statement> statements = new();
+
+            while (!Match(TokenType.RightBrace))
+            {
+                statements.Add(ParseStatement());
+            }
+
+            return new Statement.BlockStmt(statements);
         }
 
         private Expression ParseExpression()
@@ -119,6 +219,9 @@ namespace ConcumaCompiler.Parsing
 
             if (Match(TokenType.Integer, TokenType.Double, TokenType.String))
                 return new Expression.Literal(Previous().Value);
+
+            if (Match(TokenType.Identifier))
+                return new Expression.Var(Previous());
 
             if (Match(TokenType.LeftParen))
             {

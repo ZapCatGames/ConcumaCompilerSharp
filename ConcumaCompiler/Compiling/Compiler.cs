@@ -8,6 +8,9 @@ namespace ConcumaCompiler.Compiling
         private readonly List<Statement> _statements = new();
         private readonly List<byte> _bytecode = new();
 
+        private readonly Dictionary<string, int> _definedSymbols = new();
+        private int _symbolIndex = 0;
+
         public Compiler(List<Statement> statements)
         {
             _statements = statements;
@@ -30,13 +33,87 @@ namespace ConcumaCompiler.Compiling
                 case Statement.PrintStmt p:
                     {
                         _bytecode.Add(0x01);
-                        ParseExpression(p.Expression);
+                        EvaluateExpression(p.Expression);
+                        break;
+                    }
+                case Statement.IfStmt i:
+                    {
+                        _bytecode.Add(0x02);
+                        EvaluateExpression(i.Condition);
+                        EvaluateStatement(i.If);
+                        if (i.Else is not null)
+                        {
+                            EvaluateStatement(i.Else);
+                        }
+                        else
+                        {
+                            _bytecode.Add(0x00);
+                        }
+                        break;
+                    }
+                case Statement.BlockStmt b:
+                    {
+                        _bytecode.Add(0x03);
+                        _bytecode.AddRange(BitConverter.GetBytes(b.Statements.Count));
+                        for (int i = 0; i < b.Statements.Count; i++)
+                        {
+                            EvaluateStatement(b.Statements[i]);
+                        }
+                        break;
+                    }
+                case Statement.DeclarationStmt decl:
+                    {
+                        _bytecode.Add(0x04);
+                        _bytecode.Add(decl.IsConst ? (byte)0x01 : (byte)0x00);
+                        _bytecode.AddRange(BitConverter.GetBytes(_symbolIndex));
+                        if (decl.Initializer is null)
+                        {
+                            _bytecode.Add(0x00);
+                        }
+                        else
+                        {
+                            EvaluateExpression(decl.Initializer);
+                        }
+                        _definedSymbols.Add(decl.Name.Lexeme, _symbolIndex++);
+                        break;
+                    }
+                case Statement.DefinitionStmt def:
+                    {
+                        _bytecode.Add(0x05);
+                        _bytecode.AddRange(BitConverter.GetBytes(_definedSymbols[def.Name.Lexeme]));
+                        EvaluateExpression(def.Value);
+                        break;
+                    }
+                case Statement.ForStmt f:
+                    {
+                        _bytecode.Add(0x06);
+                        if (f.Initializer != null)
+                        {
+                            EvaluateStatement(f.Initializer);
+                        }
+                        else
+                        {
+                            _bytecode.Add(0x00);
+                        }
+
+                        EvaluateExpression(f.Condition);
+
+                        EvaluateStatement(f.Action);
+
+                        if (f.Accumulator != null)
+                        {
+                            EvaluateStatement(f.Accumulator);
+                        }
+                        else
+                        {
+                            _bytecode.Add(0x00);
+                        }
                         break;
                     }
             }
         }
 
-        private void ParseExpression(Expression expression)
+        private void EvaluateExpression(Expression expression)
         {
             switch (expression)
             {
@@ -50,13 +127,22 @@ namespace ConcumaCompiler.Compiling
                     break;
                 case Expression.Grouping g:
                     _bytecode.Add(0x03);
-                    ParseExpression(g.Expression);
+                    EvaluateExpression(g.Expression);
                     break;
                 case Expression.Literal l:
                     _bytecode.Add(0x04);
                     Literal(l);
                     break;
+                case Expression.Var v:
+                    _bytecode.Add(0x05);
+                    Var(v);
+                    break;
             }
+        }
+
+        private void Var(Expression.Var v)
+        {
+            _bytecode.AddRange(BitConverter.GetBytes(_definedSymbols[v.Name.Lexeme]));
         }
 
         private void Unary(Expression.Unary u)
@@ -75,7 +161,7 @@ namespace ConcumaCompiler.Compiling
                     }
             }
 
-            ParseExpression(u.Right);
+            EvaluateExpression(u.Right);
         }
 
         private void Binary(Expression.Binary b)
@@ -134,8 +220,8 @@ namespace ConcumaCompiler.Compiling
                     }
             }
 
-            ParseExpression(b.Left);
-            ParseExpression(b.Right);
+            EvaluateExpression(b.Left);
+            EvaluateExpression(b.Right);
         }
 
         private void Literal(Expression.Literal l)
