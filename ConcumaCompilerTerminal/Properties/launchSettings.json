@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ConcumaCompilerTerminal": {
+      "commandName": "Project",
+      "commandLineArgs": "scr/in.ccm -o scr/out.occm"
+    }
+  }
+}
