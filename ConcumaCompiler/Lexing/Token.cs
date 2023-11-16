@@ -1,4 +1,4 @@
-﻿namespace ConcumaCompilerFramework.Lexing
+﻿namespace ConcumaCompiler.Lexing
 {
     public enum TokenType
     {

@@ -1,6 +1,6 @@
-﻿using ConcumaCompilerFramework.Lexing;
+﻿using ConcumaCompiler.Lexing;
 
-namespace ConcumaCompilerFramework
+namespace ConcumaCompiler
 {
     public static class ErrorHandling
     {

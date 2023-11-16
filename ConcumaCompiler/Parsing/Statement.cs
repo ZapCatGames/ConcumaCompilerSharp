@@ -1,4 +1,4 @@
-﻿namespace ConcumaCompilerFramework.Parsing
+﻿namespace ConcumaCompiler.Parsing
 {
     public abstract class Statement
     {

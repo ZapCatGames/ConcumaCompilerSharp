@@ -1,7 +1,7 @@
-﻿using ConcumaCompilerFramework.Lexing;
-using ConcumaCompilerFramework.Parsing;
+﻿using ConcumaCompiler.Lexing;
+using ConcumaCompiler.Parsing;
 
-namespace ConcumaCompilerFramework.Compiling
+namespace ConcumaCompiler.Compiling
 {
     public sealed class Compiler
     {

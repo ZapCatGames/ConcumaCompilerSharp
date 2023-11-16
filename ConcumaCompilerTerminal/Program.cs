@@ -1,9 +1,8 @@
-﻿using ConcumaCompilerFramework.Compiling;
-using ConcumaCompilerFramework.Lexing;
-using ConcumaCompilerFramework.Parsing;
-using ConcumaRuntimeFramework;
+﻿using ConcumaCompiler.Compiling;
+using ConcumaCompiler.Lexing;
+using ConcumaCompiler.Parsing;
 
-namespace ConcumaConsoleCompiler
+namespace ConcumaCompilerTerminal
 {
     static class Program
     {
@@ -14,9 +13,6 @@ namespace ConcumaConsoleCompiler
                 Tokenizer tokenizer = new(Console.ReadLine()!);
                 Parser parser = new(tokenizer.Lex());
                 Compiler compiler = new(parser.Parse());
-
-                VM vm = new(compiler.Compile().ToArray());
-                vm.Run();
             }
         }
     }

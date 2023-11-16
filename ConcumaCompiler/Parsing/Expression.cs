@@ -1,6 +1,6 @@
-﻿using ConcumaCompilerFramework.Lexing;
+﻿using ConcumaCompiler.Lexing;
 
-namespace ConcumaCompilerFramework.Parsing
+namespace ConcumaCompiler.Parsing
 {
     public abstract class Expression
     {

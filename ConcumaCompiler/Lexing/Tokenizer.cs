@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace ConcumaCompilerFramework.Lexing
+namespace ConcumaCompiler.Lexing
 {
     public sealed class Tokenizer
     {

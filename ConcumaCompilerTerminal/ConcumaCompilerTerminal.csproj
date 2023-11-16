@@ -8,8 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ConcumaCompilerFramework\ConcumaCompilerFramework.csproj" />
-    <ProjectReference Include="..\ConcumaRuntimeFramework\ConcumaRuntimeFramework.csproj" />
+    <ProjectReference Include="..\ConcumaCompiler\ConcumaCompiler.csproj" />
   </ItemGroup>
 
 </Project>

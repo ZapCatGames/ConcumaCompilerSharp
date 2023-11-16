@@ -1,5 +1,5 @@
-﻿using ConcumaCompilerFramework.Lexing;
-using ConcumaCompilerFramework.Parsing;
+﻿using ConcumaCompiler.Lexing;
+using ConcumaCompiler.Parsing;
 
 namespace ConcumaTests.Compilation
 {

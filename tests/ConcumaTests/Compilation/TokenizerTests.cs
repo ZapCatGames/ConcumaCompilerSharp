@@ -1,4 +1,4 @@
-﻿using ConcumaCompilerFramework.Lexing;
+﻿using ConcumaCompiler.Lexing;
 
 namespace ConcumaTests.Compilation
 {

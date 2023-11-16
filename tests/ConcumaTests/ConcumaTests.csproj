@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ConcumaCompilerFramework\ConcumaCompilerFramework.csproj" />
+    <ProjectReference Include="..\..\ConcumaCompiler\ConcumaCompiler.csproj" />
   </ItemGroup>
 
 </Project>
