@@ -1,4 +1,6 @@
-﻿namespace ConcumaCompiler.Compiling
+﻿using ConcumaCompiler.Lexing;
+
+namespace ConcumaCompiler.Compiling
 {
     public sealed class ConcumaEnvironment
     {
@@ -11,14 +13,14 @@
         }
 
         public void Add(string name, int addr) => _symbols.Add(name, addr);
-        public int Find(string name)
+        public int Find(Token name)
         {
-            if (_symbols.ContainsKey(name))
+            if (_symbols.ContainsKey(name.Lexeme))
             {
-                return _symbols[name];
+                return _symbols[name.Lexeme];
             }
 
-            if (_parent is null) throw new Exception("Tried to access unknown variable.");
+            if (_parent is null) throw new CompilerException(name.Line, "Tried to access unknown variable.");
 
             return _parent.Find(name);
         }

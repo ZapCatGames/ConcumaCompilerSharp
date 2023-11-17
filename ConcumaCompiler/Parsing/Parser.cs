@@ -1,8 +1,17 @@
 ﻿using ConcumaCompiler.Lexing;
-using System.Xml.Linq;
 
 namespace ConcumaCompiler.Parsing
 {
+    public class ParseException : Exception
+    {
+        public Token Token { get; }
+
+        public ParseException(Token token, string message) : base(message)
+        {
+            Token = token;
+        }
+    }
+
     public sealed class Parser
     {
         private readonly List<Token> _tokens;
@@ -19,7 +28,15 @@ namespace ConcumaCompiler.Parsing
 
             while (!IsEnd())
             {
-                statements.Add(ParseStatement());
+                try
+                {
+                    statements.Add(ParseStatement());
+                }
+                catch (ParseException p)
+                {
+                    ErrorHandling.Parsing(p.Token, p.Message);
+                    return statements;
+                }
             }
 
             return statements;
@@ -60,8 +77,7 @@ namespace ConcumaCompiler.Parsing
                     return Identifier();
             }
 
-            Synchronize();
-            return ParseStatement();
+            throw new ParseException(Previous(), "Unknown statement.");
         }
 
         private Statement Function()
@@ -142,8 +158,7 @@ namespace ConcumaCompiler.Parsing
                 return new Statement.CallStmt(name, parameters);
             }
 
-            ErrorHandling.Parsing(name, "Floating identifier.");
-            throw new Exception();
+            throw new ParseException(name, "Floating identifier.");
         }
 
         private Statement DeclarationStatement(bool isConst)
@@ -309,8 +324,7 @@ namespace ConcumaCompiler.Parsing
                 return new Expression.Grouping(e);
             }
 
-            ErrorHandling.Parsing(Peek(), "Uncaught Token!");
-            throw new Exception("Uncaught Token.");
+            throw new ParseException(Peek(), "Uncaught Token.");
         }
 
         private bool IsEnd() => Peek().Type == TokenType.EoF;
@@ -340,27 +354,7 @@ namespace ConcumaCompiler.Parsing
         {
             if (Peek().Type == type) return Advance();
 
-            ErrorHandling.Parsing(Peek(), message);
-            Synchronize();
-            return Peek();
-        }
-
-        private void Synchronize()
-        {
-            Advance();
-
-            while (!IsEnd())
-            {
-                if (Previous().Type == TokenType.Semicolon) return;
-
-                switch (Peek().Type)
-                {
-                    case TokenType.Print:
-                        return;
-                }
-            }
-
-            Advance();
+            throw new ParseException(Peek(), message);
         }
     }
 }

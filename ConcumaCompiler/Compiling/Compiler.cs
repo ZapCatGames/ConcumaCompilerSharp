@@ -1,9 +1,18 @@
 ﻿using ConcumaCompiler.Lexing;
 using ConcumaCompiler.Parsing;
-using static ConcumaCompiler.Parsing.Expression;
 
 namespace ConcumaCompiler.Compiling
 {
+    public class CompilerException : Exception
+    {
+        public int Line { get; }
+
+        public CompilerException(int line, string message) : base(message)
+        {
+            Line = line;
+        }
+    }
+
     public sealed class Compiler
     {
         private readonly List<Statement> _statements = new();
@@ -21,7 +30,16 @@ namespace ConcumaCompiler.Compiling
         {
             foreach (Statement stmt in _statements)
             {
-                EvaluateStatement(stmt);
+                try
+                {
+                    EvaluateStatement(stmt);
+                }
+                catch (CompilerException c)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"\"{c.Message}\" on line {c.Line}");
+                    Console.ForegroundColor = ConsoleColor.White;
+                }
             }
 
             return _bytecode;
@@ -81,7 +99,7 @@ namespace ConcumaCompiler.Compiling
                 case Statement.DefinitionStmt def:
                     {
                         _bytecode.Add(0x05);
-                        _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(def.Name.Lexeme)));
+                        _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(def.Name)));
                         EvaluateExpression(def.Value);
                         break;
                     }
@@ -135,7 +153,7 @@ namespace ConcumaCompiler.Compiling
                 case Statement.CallStmt call:
                     {
                         _bytecode.Add(0x09);
-                        _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(call.Name.Lexeme)));
+                        _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(call.Name)));
                         _bytecode.AddRange(BitConverter.GetBytes(call.Parameters.Count));
                         for (int i = 0; i < call.Parameters.Count; i++)
                         {
@@ -193,7 +211,7 @@ namespace ConcumaCompiler.Compiling
 
         private void Call(Expression.Call c)
         {
-            _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(c.Name.Lexeme)));
+            _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(c.Name)));
             _bytecode.AddRange(BitConverter.GetBytes(c.Parameters.Count));
             for (int i = 0; i < c.Parameters.Count; i++)
             {
@@ -203,7 +221,7 @@ namespace ConcumaCompiler.Compiling
 
         private void Var(Expression.Var v)
         {
-            _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(v.Name.Lexeme)));
+            _bytecode.AddRange(BitConverter.GetBytes(_currentEnv.Find(v.Name)));
         }
 
         private void Unary(Expression.Unary u)
