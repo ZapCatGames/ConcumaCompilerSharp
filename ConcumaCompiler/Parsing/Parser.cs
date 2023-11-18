@@ -65,6 +65,8 @@ namespace ConcumaCompiler.Parsing
                 case TokenType.Break:
                     Consume(TokenType.Semicolon, "Expected ';' after 'break'.");
                     return new Statement.Break();
+                case TokenType.Class:
+                    return Class();
                 case TokenType.Return:
                     Expression? e = null;
                     if (!Match(TokenType.Semicolon))
@@ -80,7 +82,36 @@ namespace ConcumaCompiler.Parsing
             throw new ParseException(Previous(), "Unknown statement.");
         }
 
-        private Statement Function()
+        private Statement.ClassStmt Class()
+        {
+            Token name = Advance();
+            List<Statement.DeclarationStmt> variables = new();
+            List<Statement.Function> methods = new();
+
+            Consume(TokenType.LeftBrace, "Expected '{' after class name.");
+
+            while (!Match(TokenType.RightBrace))
+            {
+                switch (Advance().Type)
+                {
+                    case TokenType.Var:
+                        variables.Add(DeclarationStatement(false));
+                        break;
+                    case TokenType.Const:
+                        variables.Add(DeclarationStatement(true));
+                        break;
+                    case TokenType.Function:
+                        methods.Add(Function());
+                        break;
+                    default:
+                        throw new ParseException(Previous(), "Invalid statement in class definition.");
+                }
+            }
+
+            return new Statement.ClassStmt(name, variables, methods);
+        }
+
+        private Statement.Function Function()
         {
             Token name = Advance();
             Consume(TokenType.LeftParen, "Expected '(' after method name.");
@@ -103,7 +134,7 @@ namespace ConcumaCompiler.Parsing
             return new Statement.Function(name, parameters, action);
         }
 
-        private Statement ForStatement()
+        private Statement.ForStmt ForStatement()
         {
             Consume(TokenType.LeftParen, "Expected '(' after 'for'.");
             Statement? initializer = null;
@@ -161,7 +192,7 @@ namespace ConcumaCompiler.Parsing
             throw new ParseException(name, "Floating identifier.");
         }
 
-        private Statement DeclarationStatement(bool isConst)
+        private Statement.DeclarationStmt DeclarationStatement(bool isConst)
         {
             Token name = Advance();
             Expression? initializer = null;
@@ -175,7 +206,7 @@ namespace ConcumaCompiler.Parsing
             return new Statement.DeclarationStmt(name, initializer, isConst);
         }
 
-        private Statement IfStatement()
+        private Statement.IfStmt IfStatement()
         {
             Consume(TokenType.LeftParen, "Expected '(' after 'if'.");
 
@@ -194,7 +225,7 @@ namespace ConcumaCompiler.Parsing
             return new Statement.IfStmt(condition, ifBranch, elseBranch);
         }
 
-        private Statement BlockStatement()
+        private Statement.BlockStmt BlockStatement()
         {
             List<Statement> statements = new();
 

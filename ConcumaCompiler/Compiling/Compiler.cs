@@ -19,6 +19,7 @@ namespace ConcumaCompiler.Compiling
         private readonly List<byte> _bytecode = new();
 
         private ConcumaEnvironment _currentEnv = new(null);
+        private readonly Dictionary<string, int> _allSymbols = new();
         private int _symbolIndex = 1;
 
         public Compiler(List<Statement> statements)
@@ -28,6 +29,8 @@ namespace ConcumaCompiler.Compiling
 
         public List<byte> Compile()
         {
+            _bytecode.AddRange(BitConverter.GetBytes(0));
+
             foreach (Statement stmt in _statements)
             {
                 try
@@ -40,6 +43,22 @@ namespace ConcumaCompiler.Compiling
                     Console.WriteLine($"\"{c.Message}\" on line {c.Line}");
                     Console.ForegroundColor = ConsoleColor.White;
                 }
+            }
+
+            byte[] stLoc = BitConverter.GetBytes(_bytecode.Count);
+            _bytecode[0] = stLoc[0];
+            _bytecode[1] = stLoc[1];
+            _bytecode[2] = stLoc[2];
+            _bytecode[3] = stLoc[3];
+
+            foreach (KeyValuePair<string, int> symbol in _allSymbols)
+            {
+                _bytecode.AddRange(BitConverter.GetBytes(symbol.Key.Length));
+                foreach (char c in symbol.Key)
+                {
+                    _bytecode.Add((byte)c);
+                }
+                _bytecode.AddRange(BitConverter.GetBytes(symbol.Value));
             }
 
             return _bytecode;
@@ -84,7 +103,8 @@ namespace ConcumaCompiler.Compiling
                     {
                         _bytecode.Add(0x04);
                         _bytecode.Add(decl.IsConst ? (byte)0x01 : (byte)0x00);
-                        _bytecode.AddRange(BitConverter.GetBytes(_symbolIndex));
+                        int symbolIndex = GetSymbolIndex(decl.Name.Lexeme);
+                        _bytecode.AddRange(BitConverter.GetBytes(symbolIndex));
                         if (decl.Initializer is null)
                         {
                             _bytecode.Add(0x00);
@@ -93,7 +113,7 @@ namespace ConcumaCompiler.Compiling
                         {
                             EvaluateExpression(decl.Initializer);
                         }
-                        _currentEnv.Add(decl.Name.Lexeme, _symbolIndex++);
+                        _currentEnv.Add(decl.Name.Lexeme, symbolIndex);
                         break;
                     }
                 case Statement.DefinitionStmt def:
@@ -137,14 +157,16 @@ namespace ConcumaCompiler.Compiling
                 case Statement.Function fn:
                     {
                         _bytecode.Add(0x08);
-                        _bytecode.AddRange(BitConverter.GetBytes(_symbolIndex));
-                        _currentEnv.Add(fn.Name.Lexeme, _symbolIndex++);
+                        int symbolIndex = GetSymbolIndex(fn.Name.Lexeme);
+                        _bytecode.AddRange(BitConverter.GetBytes(symbolIndex));
+                        _currentEnv.Add(fn.Name.Lexeme, symbolIndex);
                         _currentEnv = new ConcumaEnvironment(_currentEnv);
                         _bytecode.AddRange(BitConverter.GetBytes(fn.Parameters.Count));
                         for (int i = 0; i < fn.Parameters.Count; i++)
                         {
-                            _bytecode.AddRange(BitConverter.GetBytes(_symbolIndex));
-                            _currentEnv.Add(fn.Parameters[i].Lexeme, _symbolIndex++);
+                            int pSymbolIndex = GetSymbolIndex(fn.Parameters[i].Lexeme);
+                            _bytecode.AddRange(BitConverter.GetBytes(pSymbolIndex));
+                            _currentEnv.Add(fn.Parameters[i].Lexeme, pSymbolIndex);
                         }
                         EvaluateStatement(fn.Action);
                         _currentEnv = _currentEnv.Exit()!;
@@ -174,7 +196,34 @@ namespace ConcumaCompiler.Compiling
                         }
                         break;
                     }
+                case Statement.ClassStmt cls:
+                    {
+                        _bytecode.Add(0x0B);
+                        int symbolIndex = GetSymbolIndex(cls.Name.Lexeme);
+                        _bytecode.AddRange(BitConverter.GetBytes(symbolIndex));
+                        _currentEnv.Add(cls.Name.Lexeme, symbolIndex);
+                        _currentEnv = new ConcumaEnvironment(_currentEnv);
+                        _bytecode.AddRange(BitConverter.GetBytes(cls.Variables.Count));
+                        for (int i = 0; i < cls.Variables.Count; i++)
+                        {
+                            EvaluateStatement(cls.Variables[i]);
+                        }
+                        _bytecode.AddRange(BitConverter.GetBytes(cls.Methods.Count));
+                        for (int i = 0; i < cls.Methods.Count; i++)
+                        {
+                            EvaluateStatement(cls.Methods[i]);
+                        }
+                        _currentEnv = _currentEnv.Exit()!;
+                        break;
+                    }
             }
+        }
+
+        private int GetSymbolIndex(string key)
+        {
+            if (_allSymbols.TryGetValue(key, out int symbol)) return symbol;
+            _allSymbols.Add(key, _symbolIndex++);
+            return _symbolIndex - 1;
         }
 
         private void EvaluateExpression(Expression expression)
@@ -328,7 +377,7 @@ namespace ConcumaCompiler.Compiling
                     break;
                 case string s:
                     _bytecode.Add(0x04);
-                    _bytecode.Add((byte)s.Length);
+                    _bytecode.AddRange(BitConverter.GetBytes(s.Length));
                     foreach (char c in s)
                     {
                         _bytecode.Add((byte)c);

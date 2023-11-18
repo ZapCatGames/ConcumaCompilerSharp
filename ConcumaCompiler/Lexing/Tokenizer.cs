@@ -18,6 +18,7 @@ namespace ConcumaCompiler.Lexing
             { "fn", TokenType.Function },
             { "return", TokenType.Return },
             { "break", TokenType.Break },
+            { "class", TokenType.Class },
         };
 
         private readonly string _text;

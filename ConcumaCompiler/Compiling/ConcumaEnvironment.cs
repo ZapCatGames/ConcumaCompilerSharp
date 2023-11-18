@@ -24,6 +24,7 @@ namespace ConcumaCompiler.Compiling
 
             return _parent.Find(name);
         }
+        public Dictionary<string, int> GetSymbols() => _symbols;
         public ConcumaEnvironment? Exit() => _parent;
     }
 }

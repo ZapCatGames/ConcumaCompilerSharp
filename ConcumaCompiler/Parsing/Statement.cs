@@ -127,5 +127,19 @@ namespace ConcumaCompiler.Parsing
             public Token Name { get; }
             public List<Expression> Parameters { get; }
         }
+
+        public sealed class ClassStmt : Statement
+        {
+            public ClassStmt(Token name, List<DeclarationStmt> variables, List<Function> methods)
+            {
+                Name = name;
+                Variables = variables;
+                Methods = methods;
+            }
+
+            public Token Name { get; }
+            public List<DeclarationStmt> Variables { get; }
+            public List<Function> Methods { get; }
+        }
     }
 }
