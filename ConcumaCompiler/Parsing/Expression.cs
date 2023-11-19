@@ -71,5 +71,19 @@ namespace ConcumaCompiler.Parsing
             public Token Name { get; }
             public List<Expression> Parameters { get; }
         }
+
+        public sealed class Accessor : Expression
+        {
+            public Accessor(Expression left, Expression right, Token @operator)
+            {
+                Left = left;
+                Right = right;
+                Operator = @operator;
+            }
+
+            public Expression Left { get; }
+            public Expression Right { get; }
+            public Token Operator { get; }
+        }
     }
 }

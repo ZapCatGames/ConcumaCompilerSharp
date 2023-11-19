@@ -141,5 +141,31 @@ namespace ConcumaCompiler.Parsing
             public List<DeclarationStmt> Variables { get; }
             public List<Function> Methods { get; }
         }
+
+        public sealed class ModuleStmt : Statement
+        {
+            public ModuleStmt(Token name, List<DeclarationStmt> variables, List<Function> methods)
+            {
+                Name = name;
+                Variables = variables;
+                Methods = methods;
+            }
+
+            public Token Name { get; }
+            public List<DeclarationStmt> Variables { get; }
+            public List<Function> Methods { get; }
+        }
+
+        public sealed class ImportStmt : Statement
+        {
+            public ImportStmt(Token identifier, Token? alias)
+            {
+                Identifier = identifier;
+                Alias = alias;
+            }
+
+            public Token Identifier { get; set; }
+            public Token? Alias { get; set; }
+        }
     }
 }

@@ -18,7 +18,7 @@ namespace ConcumaCompiler.Compiling
         private readonly List<Statement> _statements = new();
         private readonly List<byte> _bytecode = new();
 
-        private ConcumaEnvironment _currentEnv = new(null);
+        private ConcumaEnvironment _currentEnv = new(0, null);
         private readonly Dictionary<string, int> _allSymbols = new();
         private int _symbolIndex = 1;
 
@@ -40,7 +40,7 @@ namespace ConcumaCompiler.Compiling
                 catch (CompilerException c)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"\"{c.Message}\" on line {c.Line}");
+                    Console.WriteLine($"CompilationError: \"{c.Message}\" on line {c.Line}");
                     Console.ForegroundColor = ConsoleColor.White;
                 }
             }
@@ -160,7 +160,7 @@ namespace ConcumaCompiler.Compiling
                         int symbolIndex = GetSymbolIndex(fn.Name.Lexeme);
                         _bytecode.AddRange(BitConverter.GetBytes(symbolIndex));
                         _currentEnv.Add(fn.Name.Lexeme, symbolIndex);
-                        _currentEnv = new ConcumaEnvironment(_currentEnv);
+                        _currentEnv = new ConcumaEnvironment(symbolIndex, _currentEnv);
                         _bytecode.AddRange(BitConverter.GetBytes(fn.Parameters.Count));
                         for (int i = 0; i < fn.Parameters.Count; i++)
                         {
@@ -202,7 +202,7 @@ namespace ConcumaCompiler.Compiling
                         int symbolIndex = GetSymbolIndex(cls.Name.Lexeme);
                         _bytecode.AddRange(BitConverter.GetBytes(symbolIndex));
                         _currentEnv.Add(cls.Name.Lexeme, symbolIndex);
-                        _currentEnv = new ConcumaEnvironment(_currentEnv);
+                        _currentEnv = new ConcumaEnvironment(symbolIndex, _currentEnv);
                         _bytecode.AddRange(BitConverter.GetBytes(cls.Variables.Count));
                         for (int i = 0; i < cls.Variables.Count; i++)
                         {
@@ -214,6 +214,44 @@ namespace ConcumaCompiler.Compiling
                             EvaluateStatement(cls.Methods[i]);
                         }
                         _currentEnv = _currentEnv.Exit()!;
+                        break;
+                    }
+                case Statement.ModuleStmt mod:
+                    {
+                        _bytecode.Add(0x0C);
+                        int symbolIndex = GetSymbolIndex(mod.Name.Lexeme);
+                        _bytecode.AddRange(BitConverter.GetBytes(symbolIndex));
+                        _currentEnv.Add(mod.Name.Lexeme, symbolIndex);
+                        _currentEnv = new ConcumaEnvironment(symbolIndex, _currentEnv);
+                        _bytecode.AddRange(BitConverter.GetBytes(mod.Variables.Count));
+                        for (int i = 0; i < mod.Variables.Count; i++)
+                        {
+                            EvaluateStatement(mod.Variables[i]);
+                        }
+                        _bytecode.AddRange(BitConverter.GetBytes(mod.Methods.Count));
+                        for (int i = 0; i < mod.Methods.Count; i++)
+                        {
+                            EvaluateStatement(mod.Methods[i]);
+                        }
+                        _currentEnv = _currentEnv.Exit()!;
+                        break;
+                    }
+                case Statement.ImportStmt imp:
+                    {
+                        _bytecode.Add(0x0D);
+                        int symbolIndex = GetSymbolIndex(imp.Identifier.Lexeme);
+                        _bytecode.AddRange(BitConverter.GetBytes(symbolIndex));
+                        _currentEnv.Add(imp.Identifier.Lexeme, symbolIndex);
+                        if (imp.Alias is Token alias)
+                        {
+                            int aliasIndex = GetSymbolIndex(alias.Lexeme);
+                            _bytecode.AddRange(BitConverter.GetBytes(aliasIndex));
+                            _currentEnv.Add(alias.Lexeme, aliasIndex);
+                        }
+                        else
+                        {
+                            _bytecode.Add(0x00);
+                        }
                         break;
                     }
             }
@@ -254,8 +292,29 @@ namespace ConcumaCompiler.Compiling
                     _bytecode.Add(0x06);
                     Call(c);
                     break;
-
+                case Expression.Accessor a:
+                    _bytecode.Add(0x07);
+                    Accessor(a);
+                    break;
             }
+        }
+
+        private void Accessor(Expression.Accessor a)
+        {
+            EvaluateExpression(a.Left);
+            if (a.Left is Expression.Var v)
+            {
+                int es = _currentEnv.Find(v.Name);
+                _currentEnv = _currentEnv.GetChild(es);
+            }
+            else
+            {
+                throw new CompilerException(a.Operator.Line, "Left side of accessor must be an identifier.");
+            }
+
+            EvaluateExpression(a.Right);
+
+            _currentEnv = _currentEnv.Exit()!;
         }
 
         private void Call(Expression.Call c)
@@ -297,21 +356,27 @@ namespace ConcumaCompiler.Compiling
             switch (b.Operator.Type)
             {
                 case TokenType.Plus:
+                case TokenType.PlusEqual:
+                case TokenType.PlusPlus:
                     {
                         _bytecode.Add(0x01);
                         break;
                     }
                 case TokenType.Minus:
+                case TokenType.MinusEqual:
+                case TokenType.MinusMinus:
                     {
                         _bytecode.Add(0x02);
                         break;
                     }
                 case TokenType.Star:
+                case TokenType.StarEqual:
                     {
                         _bytecode.Add(0x03);
                         break;
                     }
                 case TokenType.Slash:
+                case TokenType.SlashEqual:
                     {
                         _bytecode.Add(0x04);
                         break;

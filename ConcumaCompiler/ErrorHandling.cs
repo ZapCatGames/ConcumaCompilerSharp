@@ -20,7 +20,7 @@ namespace ConcumaCompiler
 
             foreach (LexingException l in _lexingExceptions)
             {
-                Console.WriteLine($"\"{l.Message}\" at symbol \"{l.Symbol}\" on line {l.Line}.");
+                Console.WriteLine($"LexingError: \"{l.Message}\" at symbol \"{l.Symbol}\" on line {l.Line}.");
             }
 
             Console.ForegroundColor = ConsoleColor.White;
@@ -41,7 +41,7 @@ namespace ConcumaCompiler
 
             foreach (ParsingException p in _parsingExceptions)
             {
-                Console.WriteLine($"\"{p.Message}\" at symbol \"{p.Token.Lexeme}\" on line {p.Token.Line}.");
+                Console.WriteLine($"ParsingError: \"{p.Message}\" at symbol \"{p.Token.Lexeme}\" on line {p.Token.Line}.");
             }
 
             Console.ForegroundColor = ConsoleColor.White;

@@ -48,7 +48,7 @@ namespace ConcumaCompiler.Parsing
             {
                 case TokenType.Print:
                     Statement s = new Statement.PrintStmt(ParseExpression());
-                    Consume(TokenType.Semicolon, "Expected semicolon after expression.");
+                    Consume(TokenType.Semicolon, "Expected ';' after expression.");
                     return s;
                 case TokenType.If:
                     return IfStatement();
@@ -77,9 +77,49 @@ namespace ConcumaCompiler.Parsing
                     return new Statement.ReturnStmt(e);
                 case TokenType.Identifier:
                     return Identifier();
+                case TokenType.Module:
+                    return Module();
+                case TokenType.Import:
+                    Token identifier = Advance();
+                    Token? alias = null;
+                    if (Match(TokenType.As))
+                    {
+                        alias = Advance();
+                    }
+                    Consume(TokenType.Semicolon, "Expected ';' after expression.");
+                    return new Statement.ImportStmt(identifier, alias);
             }
 
             throw new ParseException(Previous(), "Unknown statement.");
+        }
+
+        private Statement.ModuleStmt Module()
+        {
+            Token name = Advance();
+            List<Statement.DeclarationStmt> variables = new();
+            List<Statement.Function> methods = new();
+
+            Consume(TokenType.LeftBrace, "Expected '{' after class name.");
+
+            while (!Match(TokenType.RightBrace))
+            {
+                switch (Advance().Type)
+                {
+                    case TokenType.Var:
+                        variables.Add(DeclarationStatement(false));
+                        break;
+                    case TokenType.Const:
+                        variables.Add(DeclarationStatement(true));
+                        break;
+                    case TokenType.Function:
+                        methods.Add(Function());
+                        break;
+                    default:
+                        throw new ParseException(Previous(), "Invalid statement in module definition.");
+                }
+            }
+
+            return new Statement.ModuleStmt(name, variables, methods);
         }
 
         private Statement.ClassStmt Class()
@@ -118,13 +158,12 @@ namespace ConcumaCompiler.Parsing
 
             List<Token> parameters = new();
 
-            while (true)
+            if (Peek().Type != TokenType.RightParen)
             {
-                parameters.Add(Advance());
-                if (!Match(TokenType.Comma))
+                do
                 {
-                    break;
-                }
+                    parameters.Add(Advance());
+                } while (Match(TokenType.Comma));
             }
 
             Consume(TokenType.RightParen, "Expected ')' after function parameters.");
@@ -175,18 +214,30 @@ namespace ConcumaCompiler.Parsing
             {
                 List<Expression> parameters = new();
 
-                while (true)
+                if (Peek().Type != TokenType.RightParen)
                 {
-                    parameters.Add(ParseExpression());
-                    if (!Match(TokenType.Comma))
+                    do
                     {
-                        break;
-                    }
+                        parameters.Add(ParseExpression());
+                    } while (Match(TokenType.Comma));
                 }
 
                 Consume(TokenType.RightParen, "Expected ')' after function parameters.");
-                Consume(TokenType.Semicolon, "Expected ';' after function call.");
+                if (requireSemicolon) Consume(TokenType.Semicolon, "Expected ';' after function call.");
                 return new Statement.CallStmt(name, parameters);
+            }
+            else if (Match(TokenType.PlusEqual, TokenType.MinusEqual, TokenType.StarEqual, TokenType.SlashEqual))
+            {
+                Token op = Previous();
+                Expression value = ParseExpression();
+                if (requireSemicolon) Consume(TokenType.Semicolon, "Expected ';' after redefinition.");
+                return new Statement.DefinitionStmt(name, new Expression.Binary(new Expression.Var(name), value, op));
+            }
+            else if (Match(TokenType.PlusPlus, TokenType.MinusMinus))
+            {
+                Token op = Previous();
+                if (requireSemicolon) Consume(TokenType.Semicolon, "Expected ';' after redefinition.");
+                return new Statement.DefinitionStmt(name, new Expression.Binary(new Expression.Var(name), new Expression.Literal(1), op));
             }
 
             throw new ParseException(name, "Floating identifier.");
@@ -286,13 +337,27 @@ namespace ConcumaCompiler.Parsing
 
         private Expression Factor()
         {
-            Expression e = Unary();
+            Expression e = Accessor();
 
             while (Match(TokenType.Star, TokenType.Slash))
             {
                 Token op = Previous();
-                Expression right = Unary();
+                Expression right = Accessor();
                 e = new Expression.Binary(e, right, op);
+            }
+
+            return e;
+        }
+
+        private Expression Accessor()
+        {
+            Expression e = Unary();
+
+            while (Match(TokenType.Dot))
+            {
+                Token op = Previous();
+                Expression right = Unary();
+                e = new Expression.Accessor(e, right, op);
             }
 
             return e;
@@ -318,13 +383,12 @@ namespace ConcumaCompiler.Parsing
             {
                 List<Expression> parameters = new();
 
-                while (true)
+                if (Peek().Type != TokenType.RightParen)
                 {
-                    parameters.Add(ParseExpression());
-                    if (!Match(TokenType.Comma))
+                    do
                     {
-                        break;
-                    }
+                        parameters.Add(ParseExpression());
+                    } while (Match(TokenType.Comma));
                 }
 
                 Consume(TokenType.RightParen, "Expected ')' after function parameters.");

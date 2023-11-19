@@ -19,6 +19,9 @@ namespace ConcumaCompiler.Lexing
             { "return", TokenType.Return },
             { "break", TokenType.Break },
             { "class", TokenType.Class },
+            { "mod", TokenType.Module },
+            { "import", TokenType.Import },
+            { "as", TokenType.As }
         };
 
         private readonly string _text;
@@ -51,16 +54,49 @@ namespace ConcumaCompiler.Lexing
                         }
                     case '+':
                         {
+                            if (Peek() == '=')
+                            {
+                                Advance();
+                                tokens.Add(Token(TokenType.PlusEqual, "+="));
+                                break;
+                            }
+                            else if (Peek() == '+')
+                            {
+                                Advance();
+                                tokens.Add(Token(TokenType.PlusPlus, "++"));
+                                break;
+                            }
+
                             tokens.Add(Token(TokenType.Plus, "+"));
                             break;
                         }
                     case '-':
                         {
+                            if (Peek() == '=')
+                            {
+                                Advance();
+                                tokens.Add(Token(TokenType.MinusEqual, "-="));
+                                break;
+                            }
+                            else if (Peek() == '-')
+                            {
+                                Advance();
+                                tokens.Add(Token(TokenType.MinusMinus, "--"));
+                                break;
+                            }
+
                             tokens.Add(Token(TokenType.Minus, "-"));
                             break;
                         }
                     case '*':
                         {
+                            if (Peek() == '=')
+                            {
+                                Advance();
+                                tokens.Add(Token(TokenType.StarEqual, "*="));
+                                break;
+                            }
+
                             tokens.Add(Token(TokenType.Star, "*"));
                             break;
                         }
@@ -69,6 +105,13 @@ namespace ConcumaCompiler.Lexing
                             if (Peek() == '/')
                             {
                                 while (Advance() != '\n') ;
+                                _line++;
+                                break;
+                            }
+                            else if (Peek() == '=')
+                            {
+                                Advance();
+                                tokens.Add(Token(TokenType.SlashEqual, "/="));
                                 break;
                             }
 
@@ -146,6 +189,11 @@ namespace ConcumaCompiler.Lexing
                     case ',':
                         {
                             tokens.Add(Token(TokenType.Comma, ","));
+                            break;
+                        }
+                    case '.':
+                        {
+                            tokens.Add(Token(TokenType.Dot, "."));
                             break;
                         }
                     case ';':
