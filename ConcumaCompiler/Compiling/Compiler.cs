@@ -254,6 +254,23 @@ namespace ConcumaCompiler.Compiling
                         }
                         break;
                     }
+                case Statement.BinaryStmt bin:
+                    {
+                        _bytecode.Add(0x0E);
+                        int symbolIndex = GetSymbolIndex(bin.Func.Name.Lexeme);
+                        _bytecode.AddRange(BitConverter.GetBytes(symbolIndex));
+                        _currentEnv.Add(bin.Func.Name.Lexeme, symbolIndex);
+                        _currentEnv = new ConcumaEnvironment(symbolIndex, _currentEnv);
+                        for (int i = 0; i < 2; i++)
+                        {
+                            int pSymbolIndex = GetSymbolIndex(bin.Func.Parameters[i].Lexeme);
+                            _bytecode.AddRange(BitConverter.GetBytes(pSymbolIndex));
+                            _currentEnv.Add(bin.Func.Parameters[i].Lexeme, pSymbolIndex);
+                        }
+                        EvaluateStatement(bin.Func.Action);
+                        _currentEnv = _currentEnv.Exit()!;
+                        break;
+                    }
             }
         }
 
@@ -353,64 +370,83 @@ namespace ConcumaCompiler.Compiling
 
         private void Binary(Expression.Binary b)
         {
-            switch (b.Operator.Type)
+            if (b.Operator is Expression.Var v)
             {
-                case TokenType.Plus:
-                case TokenType.PlusEqual:
-                case TokenType.PlusPlus:
+                if (v.Name.Type == TokenType.Identifier)
+                {
+                    _bytecode.Add(0x01);
+                    EvaluateExpression(b.Operator);
+                }
+                else
+                {
+                    _bytecode.Add(0x00);
+
+                    switch (v.Name.Type)
                     {
-                        _bytecode.Add(0x01);
-                        break;
+                        case TokenType.Plus:
+                        case TokenType.PlusEqual:
+                        case TokenType.PlusPlus:
+                            {
+                                _bytecode.Add(0x01);
+                                break;
+                            }
+                        case TokenType.Minus:
+                        case TokenType.MinusEqual:
+                        case TokenType.MinusMinus:
+                            {
+                                _bytecode.Add(0x02);
+                                break;
+                            }
+                        case TokenType.Star:
+                        case TokenType.StarEqual:
+                            {
+                                _bytecode.Add(0x03);
+                                break;
+                            }
+                        case TokenType.Slash:
+                        case TokenType.SlashEqual:
+                            {
+                                _bytecode.Add(0x04);
+                                break;
+                            }
+                        case TokenType.EqualEqual:
+                            {
+                                _bytecode.Add(0x05);
+                                break;
+                            }
+                        case TokenType.BangEqual:
+                            {
+                                _bytecode.Add(0x06);
+                                break;
+                            }
+                        case TokenType.Less:
+                            {
+                                _bytecode.Add(0x07);
+                                break;
+                            }
+                        case TokenType.LessEqual:
+                            {
+                                _bytecode.Add(0x08);
+                                break;
+                            }
+                        case TokenType.Greater:
+                            {
+                                _bytecode.Add(0x09);
+                                break;
+                            }
+                        case TokenType.GreaterEqual:
+                            {
+                                _bytecode.Add(0x0A);
+                                break;
+                            }
+                        default:
+                            throw new CompilerException(0, "Unexpected operator type.");
                     }
-                case TokenType.Minus:
-                case TokenType.MinusEqual:
-                case TokenType.MinusMinus:
-                    {
-                        _bytecode.Add(0x02);
-                        break;
-                    }
-                case TokenType.Star:
-                case TokenType.StarEqual:
-                    {
-                        _bytecode.Add(0x03);
-                        break;
-                    }
-                case TokenType.Slash:
-                case TokenType.SlashEqual:
-                    {
-                        _bytecode.Add(0x04);
-                        break;
-                    }
-                case TokenType.EqualEqual:
-                    {
-                        _bytecode.Add(0x05);
-                        break;
-                    }
-                case TokenType.BangEqual:
-                    {
-                        _bytecode.Add(0x06);
-                        break;
-                    }
-                case TokenType.Less:
-                    {
-                        _bytecode.Add(0x07);
-                        break;
-                    }
-                case TokenType.LessEqual:
-                    {
-                        _bytecode.Add(0x08);
-                        break;
-                    }
-                case TokenType.Greater:
-                    {
-                        _bytecode.Add(0x09);
-                        break;
-                    }
-                case TokenType.GreaterEqual:
-                    {
-                        _bytecode.Add(0x0A);
-                        break;
-                    }
+                }
+            }
+            else
+            {
+                throw new CompilerException(0, "Unexpected operator type.");
             }
 
             EvaluateExpression(b.Left);

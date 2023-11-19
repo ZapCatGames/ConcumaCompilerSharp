@@ -15,7 +15,7 @@
         EqualEqual, BangEqual, GreaterEqual, Greater, LessEqual, Less,
 
         // Statements
-        Print, If, Else, Const, Var, For, Function, Return, Break, Class, Module, Import,
+        Print, If, Else, Const, Var, For, Function, Return, Break, Class, Module, Import, Bin,
     }
 
     public readonly record struct Token(TokenType Type, object? Value, string Lexeme, int Line);

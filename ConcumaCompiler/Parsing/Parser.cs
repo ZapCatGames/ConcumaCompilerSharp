@@ -1,4 +1,5 @@
 ﻿using ConcumaCompiler.Lexing;
+using System.Data;
 
 namespace ConcumaCompiler.Parsing
 {
@@ -88,6 +89,11 @@ namespace ConcumaCompiler.Parsing
                     }
                     Consume(TokenType.Semicolon, "Expected ';' after expression.");
                     return new Statement.ImportStmt(identifier, alias);
+                case TokenType.Bin:
+                    Token t = Previous();
+                    Statement.Function func = Function();
+                    if (func.Parameters.Count != 2) throw new ParseException(t, "Expected 2 arguments for binary operator.");
+                    return new Statement.BinaryStmt(func);
             }
 
             throw new ParseException(Previous(), "Unknown statement.");
@@ -231,13 +237,13 @@ namespace ConcumaCompiler.Parsing
                 Token op = Previous();
                 Expression value = ParseExpression();
                 if (requireSemicolon) Consume(TokenType.Semicolon, "Expected ';' after redefinition.");
-                return new Statement.DefinitionStmt(name, new Expression.Binary(new Expression.Var(name), value, op));
+                return new Statement.DefinitionStmt(name, new Expression.Binary(new Expression.Var(name), value, new Expression.Var(op)));
             }
             else if (Match(TokenType.PlusPlus, TokenType.MinusMinus))
             {
                 Token op = Previous();
                 if (requireSemicolon) Consume(TokenType.Semicolon, "Expected ';' after redefinition.");
-                return new Statement.DefinitionStmt(name, new Expression.Binary(new Expression.Var(name), new Expression.Literal(1), op));
+                return new Statement.DefinitionStmt(name, new Expression.Binary(new Expression.Var(name), new Expression.Literal(1), new Expression.Var(op)));
             }
 
             throw new ParseException(name, "Floating identifier.");
@@ -301,7 +307,7 @@ namespace ConcumaCompiler.Parsing
             {
                 Token op = Previous();
                 Expression right = Comparison();
-                e = new Expression.Binary(e, right, op);
+                e = new Expression.Binary(e, right, new Expression.Var(op));
             }
 
             return e;
@@ -309,11 +315,25 @@ namespace ConcumaCompiler.Parsing
 
         private Expression Comparison()
         {
-            Expression e = Term();
+            Expression e = Binary();
 
             while (Match(TokenType.Less, TokenType.LessEqual, TokenType.Greater, TokenType.GreaterEqual))
             {
                 Token op = Previous();
+                Expression right = Binary();
+                e = new Expression.Binary(e, right, new Expression.Var(op));
+            }
+
+            return e;
+        }
+
+        private Expression Binary()
+        {
+            Expression e = Term();
+
+            while (Peek().Type == TokenType.Identifier)
+            {
+                Expression op = ParseExpression();
                 Expression right = Term();
                 e = new Expression.Binary(e, right, op);
             }
@@ -329,7 +349,7 @@ namespace ConcumaCompiler.Parsing
             {
                 Token op = Previous();
                 Expression right = Factor();
-                e = new Expression.Binary(e, right, op);
+                e = new Expression.Binary(e, right, new Expression.Var(op));
             }
 
             return e;
@@ -343,7 +363,7 @@ namespace ConcumaCompiler.Parsing
             {
                 Token op = Previous();
                 Expression right = Accessor();
-                e = new Expression.Binary(e, right, op);
+                e = new Expression.Binary(e, right, new Expression.Var(op));
             }
 
             return e;

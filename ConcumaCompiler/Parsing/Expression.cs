@@ -28,7 +28,7 @@ namespace ConcumaCompiler.Parsing
 
         public sealed class Binary : Expression
         {
-            public Binary(Expression left, Expression right, Token @operator)
+            public Binary(Expression left, Expression right, Expression @operator)
             {
                 Left = left;
                 Right = right;
@@ -37,7 +37,7 @@ namespace ConcumaCompiler.Parsing
 
             public Expression Left { get; }
             public Expression Right { get; }
-            public Token Operator { get; }
+            public Expression Operator { get; }
         }
 
         public sealed class Grouping : Expression

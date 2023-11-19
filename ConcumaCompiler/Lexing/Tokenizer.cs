@@ -21,7 +21,8 @@ namespace ConcumaCompiler.Lexing
             { "class", TokenType.Class },
             { "mod", TokenType.Module },
             { "import", TokenType.Import },
-            { "as", TokenType.As }
+            { "as", TokenType.As },
+            { "bin", TokenType.Bin }
         };
 
         private readonly string _text;

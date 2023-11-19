@@ -167,5 +167,15 @@ namespace ConcumaCompiler.Parsing
             public Token Identifier { get; set; }
             public Token? Alias { get; set; }
         }
+
+        public sealed class BinaryStmt : Statement
+        {
+            public BinaryStmt(Function func)
+            {
+                Func = func;
+            }
+
+            public Function Func { get; set; }
+        }
     }
 }
